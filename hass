@@ -1,0 +1,97 @@
+if dist < closestDist then
+                        closestDist = dist
+                        closest = v.Character
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function createEsp(target)
+    if espObjects[target] then
+        espObjects[target].Enabled = true
+        return
+    end
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = target
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0.7
+    highlight.Parent = target
+    espObjects[target] = highlight
+end
+
+local function clearEsp()
+    for obj, highlight in pairs(espObjects) do
+        if highlight then highlight:Destroy() end
+        espObjects[obj] = nil
+    end
+end
+
+runService.RenderStepped:Connect(function()
+    if aimbot then
+        local target = getClosestTarget()
+        if target and target:FindFirstChild("Head") then
+            local targetPos = target.Head.Position
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPos)
+            statusLabel.Text = "Locked: " .. (target.Parent and target.Parent.Name or "?")
+            statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        else
+            statusLabel.Text = "Searching..."
+            statusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+        end
+    end
+    if esp then
+        for _, v in ipairs(game.Players:GetPlayers()) do
+            if v ~= player and v.Character and v.Character:FindFirstChild("Head") then
+                createEsp(v.Character)
+            end
+        end
+    else
+        clearEsp()
+    end
+end)
+
+aimbotBtn.MouseButton1Down:Connect(function()
+    aimbot = not aimbot
+    aimbotBtn.Text = aimbot and "Aimbot: ON" or "Aimbot: OFF"
+    aimbotBtn.BackgroundColor3 = aimbot and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
+    statusLabel.Text = aimbot and "Aimbot Active" or "Ready"
+end)
+
+wallBtn.MouseButton1Down:Connect(function()
+    wallCheck = not wallCheck
+    wallBtn.Text = wallCheck and "WallCheck: ON" or "WallCheck: OFF"
+    wallBtn.BackgroundColor3 = wallCheck and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
+end)
+
+espBtn.MouseButton1Down:Connect(function()
+    esp = not esp
+    espBtn.Text = esp and "ESP: ON" or "ESP: OFF"
+    espBtn.BackgroundColor3 = esp and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
+    if not esp then clearEsp() end
+end)
+
+fovInput.FocusLost:Connect(function()
+    local num = tonumber(fovInput.Text)
+    if num and num > 0 then
+        fovRadius = num
+        statusLabel.Text = "FOV: " .. fovRadius
+    else
+        fovInput.Text = tostring(fovRadius)
+    end
+end)
+
+userInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.VolumeDown or input.KeyCode == Enum.KeyCode.ButtonR1 then
+        aimbot = not aimbot
+        aimbotBtn.Text = aimbot and "Aimbot: ON" or "Aimbot: OFF"
+        aimbotBtn.BackgroundColor3 = aimbot and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
+    end
+end)
+
+print("Delta Mobile loaded")
